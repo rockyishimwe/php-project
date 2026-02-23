@@ -4,9 +4,9 @@
  * Main landing page for the application
  */
 
-require_once '../includes/config.php';
-require_once '../includes/session_handler.php';
-require_once '../includes/functions.php';
+require_once 'includes/config.php';
+require_once 'includes/session_handler.php';
+require_once 'includes/functions.php';
 
 // Initialize session handling
 if (function_exists('initDatabaseSessions')) {
@@ -15,8 +15,8 @@ if (function_exists('initDatabaseSessions')) {
     session_start();
 }
 
-$pageTitle = 'Enterprise OS - Next Generation Operating System';
-require_once '../includes/header.php';
+$basePath = '';
+require_once 'includes/header.php';
 ?>
 
 <style>
@@ -65,10 +65,10 @@ require_once '../includes/header.php';
         align-items: center;
     }
 
-    .hero-visual i {
-        font-size: 15rem;
-        color: #00d4ff;
-        opacity: 0.6;
+    .hero-visual img {
+        max-width: 100%;
+        height: auto;
+        opacity: 0.8;
         filter: drop-shadow(0 0 50px rgba(0, 212, 255, 0.5));
         animation: float 6s ease-in-out infinite;
     }
@@ -195,7 +195,7 @@ require_once '../includes/header.php';
             justify-content: center;
         }
 
-        .hero-visual i {
+        .hero-visual img {
             font-size: 10rem;
         }
 
@@ -221,16 +221,16 @@ require_once '../includes/header.php';
         <p>Enterprise OS is a next-generation operating system designed for modern businesses. Secure, scalable, and intelligent - built to handle the challenges of tomorrow.</p>
         <div class="hero-buttons">
             <?php if (isLoggedIn()): ?>
-                <a href="../dashboard.php" class="btn btn-primary">
+                <a href="dashboard.php" class="btn btn-primary">
                     <i class="fas fa-tachometer-alt"></i>
                     Go to Dashboard
                 </a>
             <?php else: ?>
-                <a href="login.php" class="btn btn-primary">
+                <a href="pages/login.php" class="btn btn-primary">
                     <i class="fas fa-rocket"></i>
                     Get Started
                 </a>
-                <a href="register.php" class="btn btn-outline">
+                <a href="pages/register.php" class="btn btn-outline">
                     <i class="fas fa-user-plus"></i>
                     Create Account
                 </a>
@@ -238,7 +238,7 @@ require_once '../includes/header.php';
         </div>
     </div>
     <div class="hero-visual">
-        <i class="fas fa-cube"></i>
+        <img src="assets/images/dashboard.png" alt="Enterprise OS Dashboard" style="max-width: 100%; height: auto; opacity: 0.8;">
     </div>
 </section>
 
@@ -306,16 +306,16 @@ require_once '../includes/header.php';
     <p>Join thousands of enterprises that trust Enterprise OS for their critical operations.</p>
     <div class="cta-buttons">
         <?php if (isLoggedIn()): ?>
-            <a href="../dashboard.php" class="btn btn-primary">
+            <a href="dashboard.php" class="btn btn-primary">
                 <i class="fas fa-tachometer-alt"></i>
                 Go to Dashboard
             </a>
         <?php else: ?>
-            <a href="register.php" class="btn btn-primary">
+            <a href="pages/register.php" class="btn btn-primary">
                 <i class="fas fa-rocket"></i>
                 Start Free Trial
             </a>
-            <a href="../contact.php" class="btn btn-outline">
+            <a href="contact.php" class="btn btn-outline">
                 <i class="fas fa-headset"></i>
                 Contact Sales
             </a>
@@ -323,4 +323,4 @@ require_once '../includes/header.php';
     </div>
 </section>
 
-<?php require_once '../includes/footer.php'; ?>
+<?php require_once 'includes/footer.php'; ?>

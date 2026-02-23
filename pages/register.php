@@ -50,23 +50,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Passwords do not match.';
             $messageType = 'error';
         } else {
-            // Attempt registration
-            $result = registerUser($formData);
+            // Handle profile image upload
+            $profileImagePath = null;
+            if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = '../assets/images/profiles/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
 
-            if ($result['success']) {
-                $message = $result['message'];
-                $messageType = 'success';
-                // Clear form data on success
-                $formData = [];
-            } else {
-                $message = $result['message'];
-                $messageType = 'error';
+                $fileName = uniqid() . '_' . basename($_FILES['profile_image']['name']);
+                $targetFile = $uploadDir . $fileName;
+
+                // Validate file type
+                $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                $fileType = $_FILES['profile_image']['type'];
+                if (!in_array($fileType, $allowedTypes)) {
+                    $message = 'Only JPG, PNG, and GIF files are allowed.';
+                    $messageType = 'error';
+                } elseif ($_FILES['profile_image']['size'] > MAX_FILE_SIZE) {
+                    $message = 'File size must be less than 5MB.';
+                    $messageType = 'error';
+                } elseif (move_uploaded_file($_FILES['profile_image']['tmp_name'], $targetFile)) {
+                    $profileImagePath = 'assets/images/profiles/' . $fileName;
+                } else {
+                    $message = 'Failed to upload image.';
+                    $messageType = 'error';
+                }
+            }
+
+            if (!isset($message)) {
+                // Attempt registration
+                $result = registerUser($formData, $profileImagePath);
+
+                if ($result['success']) {
+                    $message = $result['message'];
+                    $messageType = 'success';
+                    // Clear form data on success
+                    $formData = [];
+                } else {
+                    $message = $result['message'];
+                    $messageType = 'error';
+                }
             }
         }
     }
 }
 
 $pageTitle = 'Register - Enterprise OS';
+$basePath = '../';
 require_once '../includes/header.php';
 ?>
 
@@ -493,7 +524,7 @@ require_once '../includes/header.php';
         <?php endif; ?>
 
         <!-- Registration Form -->
-        <form method="POST" action="" novalidate id="registerForm">
+        <form method="POST" action="" enctype="multipart/form-data" novalidate id="registerForm">
             <!-- CSRF Token -->
             <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
 
@@ -644,6 +675,22 @@ require_once '../includes/header.php';
                 </div>
             </div>
 
+            <!-- Profile Image Upload -->
+            <div class="form-group">
+                <label for="profile_image" class="form-label">
+                    <i class="fas fa-camera"></i> Profile Image (Optional)
+                </label>
+                <div style="position: relative;">
+                    <input type="file"
+                           name="profile_image"
+                           id="profile_image"
+                           class="form-control"
+                           accept="image/*">
+                    <i class="fas fa-upload input-icon"></i>
+                </div>
+                <small class="form-text text-muted">Upload a profile image (JPG, PNG, GIF). Max 5MB.</small>
+            </div>
+
             <!-- Submit Button -->
             <button type="submit" class="btn btn-primary" id="registerBtn">
                 <i class="fas fa-user-plus"></i>
@@ -653,7 +700,7 @@ require_once '../includes/header.php';
 
         <!-- Links -->
         <div class="register-links">
-            <a href="../dashboard.php?page=login">
+            <a href="login.php">
                 <i class="fas fa-sign-in-alt"></i>
                 Already have an account? Sign in here
             </a>

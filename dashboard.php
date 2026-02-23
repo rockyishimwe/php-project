@@ -6,16 +6,15 @@
  * @version 2.0
  */
 
-session_start();
-
-// Include required files
+// Include required files FIRST (before session_start)
 require_once 'includes/config.php';
 require_once 'includes/session_handler.php';
 require_once 'includes/auth.php';
 require_once 'includes/security.php';
 require_once 'includes/functions.php';
 
-// Initialize database sessions if not already done
+// FIXED: initDatabaseSessions() must be called BEFORE session_start()
+// This ensures consistent session handler across all pages
 if (session_status() === PHP_SESSION_NONE) {
     initDatabaseSessions();
 }
@@ -229,6 +228,11 @@ if ($isLoggedIn && in_array($currentPage, $adminOnlyPages)) {
 // Logout handler
 if ($currentPage === 'logout') {
     if (isset($_SESSION['active_user'])) {
+        // Initialize audit logs if not set
+        if (!isset($_SESSION['audit_logs'])) {
+            $_SESSION['audit_logs'] = [];
+        }
+
         array_unshift($_SESSION['audit_logs'], [
             'user' => $_SESSION['active_user']['name'],
             'action' => 'LOGOUT',
@@ -766,7 +770,6 @@ if ($currentPage === 'login' && !isset($_SESSION['csrf_token'])) {
         .alert i {
             font-size: 1.1rem;
         }
-        }
         
         .form-select option {
             background: var(--bg-secondary);
@@ -976,6 +979,15 @@ if ($currentPage === 'login' && !isset($_SESSION['csrf_token'])) {
             border-radius: 50%;
             border: 2px solid var(--accent-primary);
             object-fit: cover;
+        }
+
+        .default-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--accent-primary);
+            font-size: 1.25rem;
         }
         
         .user-info h3 {
@@ -1648,12 +1660,12 @@ if ($currentPage === 'login' && !isset($_SESSION['csrf_token'])) {
                 <!-- Links -->
                 <div class="login-links">
                     <p>
-                        <a href="../pages/register.php">
+                        <a href="pages/register.php">
                             <i class="fas fa-user-plus"></i>
                             Don't have an account? Register here
                         </a>
                     </p>
-                    <a href="../" class="secondary-link">
+                    <a href="home.php" class="secondary-link">
                         <i class="fas fa-arrow-left"></i>
                         Return to Homepage
                     </a>
@@ -1788,7 +1800,13 @@ if ($currentPage === 'login' && !isset($_SESSION['csrf_token'])) {
                     </div>
                     
                     <div class="user-badge">
-                        <img src="<?= $user['ref_img'] ?>" alt="<?= $user['name'] ?>" class="user-avatar">
+                        <?php if (!empty($user['ref_img'])): ?>
+                            <img src="<?= $user['ref_img'] ?>" alt="<?= $user['name'] ?>" class="user-avatar">
+                        <?php else: ?>
+                            <div class="user-avatar default-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        <?php endif; ?>
                         <div class="user-info">
                             <h3>
                                 <?= $user['name'] ?>

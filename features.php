@@ -8,11 +8,11 @@
 
 session_start();
 
-// Redirect to dashboard if already logged in
-if (isset($_SESSION['active_user'])) {
-    header("Location: dashboard.php?page=home");
-    exit();
-}
+// Redirect to dashboard if already logged in - REMOVED for public pages
+// if (isset($_SESSION['active_user'])) {
+//     header("Location: dashboard.php?page=home");
+//     exit();
+// }
 
 $featureCategories = [
     'security' => [
@@ -989,7 +989,49 @@ $systemStats = [
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(0, 212, 255, 0.5);
         }
-    </style>
+    
+        /* Mobile hamburger menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 4px;
+            background: none;
+            border: none;
+        }
+        .hamburger span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: var(--accent-primary);
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+        .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .hamburger.open span:nth-child(2) { opacity: 0; }
+        .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+        @media (max-width: 768px) {
+            .hamburger { display: flex !important; }
+            .nav-links {
+                display: none !important;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: rgba(10, 14, 26, 0.98);
+                border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+                flex-direction: column;
+                padding: 1rem 2rem;
+                gap: 1rem;
+                backdrop-filter: blur(20px);
+                z-index: 999;
+            }
+            .nav-links.open { display: flex !important; }
+            .nav-buttons { gap: 0.5rem; }
+        }
+        </style>
 </head>
 <body>
     <div class="background-grid"></div>
@@ -1001,8 +1043,11 @@ $systemStats = [
             <h1>ENTERPRISE <span>OS</span></h1>
         </div>
         
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
         <div class="nav-links">
-            <a href="home.php">Home</a>
+            <a href="index.php">Home</a>
             <a href="features.php" class="active">Features</a>
             <a href="demo.php">Demo</a>
             <a href="testimonials.php">Testimonials</a>
@@ -1010,10 +1055,10 @@ $systemStats = [
         </div>
         
         <div class="nav-buttons">
-            <a href="?page=login" class="btn btn-outline">
+            <a href="pages/login.php" class="btn btn-outline">
                 <i class="fas fa-lock"></i> Login
             </a>
-            <a href="?page=login" class="btn btn-primary">
+            <a href="pages/login.php" class="btn btn-primary">
                 <i class="fas fa-rocket"></i> Get Started
             </a>
         </div>
@@ -1149,7 +1194,7 @@ $systemStats = [
             <h2>Ready to Get Started?</h2>
             <p>Join thousands of enterprises already using our platform</p>
             <div class="cta-buttons">
-                <a href="?page=login" class="btn btn-primary">
+                <a href="pages/login.php" class="btn btn-primary">
                     <i class="fas fa-fingerprint"></i> Start Free Trial
                 </a>
                 <a href="contact.php" class="btn btn-outline">
@@ -1261,6 +1306,16 @@ $systemStats = [
             el.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
             observer.observe(el);
         });
+    </script>
+    <script>
+        const hamburger = document.getElementById('hamburger');
+        const navLinks = document.querySelector('.nav-links');
+        if (hamburger && navLinks) {
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('open');
+                navLinks.classList.toggle('open');
+            });
+        }
     </script>
 </body>
 </html>

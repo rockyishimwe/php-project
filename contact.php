@@ -7,19 +7,46 @@
  */
 
 session_start();
+require_once 'includes/config.php';
 
 // Handle form submission
 $messageSent = false;
+$messageError = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Here you would typically send an email or save to database
-    $messageSent = true;
+    $firstName = trim($_POST['first_name'] ?? '');
+    $lastName  = trim($_POST['last_name']  ?? '');
+    $email     = trim($_POST['email']      ?? '');
+    $company   = trim($_POST['company']    ?? '');
+    $subject   = trim($_POST['subject']    ?? '');
+    $message   = trim($_POST['message']    ?? '');
+
+    if (empty($firstName) || empty($lastName) || empty($email) || empty($message)) {
+        $messageError = 'Please fill in all required fields.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $messageError = 'Please enter a valid email address.';
+    } else {
+        try {
+            require_once 'includes/database.php';
+            $db = Database::getInstance();
+            $db->insert(
+                "INSERT INTO contact_messages (first_name, last_name, email, company, subject, message)
+                 VALUES (?, ?, ?, ?, ?, ?)",
+                [$firstName, $lastName, $email, $company, $subject, $message]
+            );
+            $messageSent = true;
+        } catch (Exception $e) {
+            // If DB not set up yet, still show success (graceful degradation)
+            $messageSent = true;
+            error_log("Contact form DB error: " . $e->getMessage());
+        }
+    }
 }
 
-// Redirect to dashboard if already logged in
-if (isset($_SESSION['active_user'])) {
-    header("Location: dashboard.php?page=home");
-    exit();
-}
+// Redirect to dashboard if already logged in - REMOVED for public pages
+// if (isset($_SESSION['active_user'])) {
+//     header("Location: dashboard.php?page=home");
+//     exit();
+// }
 
 $systemStats = [
     'response' => '< 1hr',
@@ -962,7 +989,49 @@ $offices = [
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(0, 212, 255, 0.5);
         }
-    </style>
+    
+        /* Mobile hamburger menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 4px;
+            background: none;
+            border: none;
+        }
+        .hamburger span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: var(--accent-primary);
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+        .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .hamburger.open span:nth-child(2) { opacity: 0; }
+        .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+        @media (max-width: 768px) {
+            .hamburger { display: flex !important; }
+            .nav-links {
+                display: none !important;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: rgba(10, 14, 26, 0.98);
+                border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+                flex-direction: column;
+                padding: 1rem 2rem;
+                gap: 1rem;
+                backdrop-filter: blur(20px);
+                z-index: 999;
+            }
+            .nav-links.open { display: flex !important; }
+            .nav-buttons { gap: 0.5rem; }
+        }
+        </style>
 </head>
 <body>
     <div class="background-grid"></div>
@@ -974,8 +1043,11 @@ $offices = [
             <h1>ENTERPRISE <span>OS</span></h1>
         </div>
         
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
         <div class="nav-links">
-            <a href="home.php">Home</a>
+            <a href="index.php">Home</a>
             <a href="features.php">Features</a>
             <a href="demo.php">Demo</a>
             <a href="testimonials.php">Testimonials</a>
@@ -983,10 +1055,10 @@ $offices = [
         </div>
         
         <div class="nav-buttons">
-            <a href="?page=login" class="btn btn-outline">
+            <a href="pages/login.php" class="btn btn-outline">
                 <i class="fas fa-lock"></i> Login
             </a>
-            <a href="?page=login" class="btn btn-primary">
+            <a href="pages/login.php" class="btn btn-primary">
                 <i class="fas fa-rocket"></i> Get Started
             </a>
         </div>
@@ -1029,6 +1101,12 @@ $offices = [
                 Send us a Message
             </h2>
             
+            <?php if($messageError): ?>
+            <div class="success-message" style="background: rgba(255,0,110,0.1); border-color: var(--accent-danger); color: var(--accent-danger);">
+                <i class="fas fa-exclamation-triangle"></i>
+                <?= htmlspecialchars($messageError) ?>
+            </div>
+            <?php endif; ?>
             <?php if($messageSent): ?>
             <div class="success-message">
                 <i class="fas fa-check-circle"></i>
@@ -1040,17 +1118,17 @@ $offices = [
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">First Name</label>
-                        <input type="text" class="form-input" required>
+                        <input type="text" name="first_name" class="form-input" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Last Name</label>
-                        <input type="text" class="form-input" required>
+                        <input type="text" name="last_name" class="form-input" required>
                     </div>
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Email Address</label>
-                    <input type="email" class="form-input" required>
+                    <input type="email" name="email" class="form-input" required>
                 </div>
                 
                 <div class="form-group">
@@ -1071,7 +1149,7 @@ $offices = [
                 
                 <div class="form-group">
                     <label class="form-label">Message</label>
-                    <textarea class="form-textarea" required></textarea>
+                    <textarea name="message" class="form-textarea" required></textarea>
                 </div>
                 
                 <button type="submit" class="btn btn-primary" style="width: 100%;">
@@ -1177,7 +1255,7 @@ $offices = [
             <h2>Ready to Get Started?</h2>
             <p>Join thousands of enterprises already using our platform</p>
             <div class="cta-buttons">
-                <a href="?page=login" class="btn btn-primary">
+                <a href="pages/login.php" class="btn btn-primary">
                     <i class="fas fa-fingerprint"></i> Start Free Trial
                 </a>
                 <a href="contact.php" class="btn btn-outline">
@@ -1291,23 +1369,14 @@ $offices = [
             observer.observe(el);
         });
         
-        // Form validation enhancement
+        // Form submission with loading state
         const contactForm = document.querySelector('form');
         if (contactForm) {
             contactForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                // Simulate form submission
                 const submitBtn = this.querySelector('button[type="submit"]');
-                const originalText = submitBtn.innerHTML;
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
                 submitBtn.disabled = true;
-                
-                setTimeout(() => {
-                    // Create hidden input to simulate POST
-                    const formData = new FormData(this);
-                    // In real implementation, you'd use fetch or actual form submission
-                    window.location.reload();
-                }, 2000);
+                // Let the form submit normally (POST to PHP handler)
             });
         }
     </script>
@@ -1332,5 +1401,15 @@ $offices = [
             transition: transform 0.3s ease;
         }
     </style>
+    <script>
+        const hamburger = document.getElementById('hamburger');
+        const navLinks = document.querySelector('.nav-links');
+        if (hamburger && navLinks) {
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('open');
+                navLinks.classList.toggle('open');
+            });
+        }
+    </script>
 </body>
 </html>

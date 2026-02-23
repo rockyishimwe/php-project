@@ -5,6 +5,7 @@
  */
 
 $pageTitle = 'UI/UX Demo - Enterprise OS';
+$basePath = '';
 require_once 'includes/header.php';
 ?>
 

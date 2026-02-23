@@ -86,6 +86,7 @@ $testimonials = [
 ];
 
 $pageTitle = 'Enterprise OS | Intelligent Operating System';
+$basePath = '../';
 require_once '../includes/header.php';
 ?>
 
@@ -120,7 +121,7 @@ require_once '../includes/header.php';
                 </div>
 
                 <div class="hero-buttons">
-                    <a href="../dashboard.php?page=login" class="btn btn-primary">
+                    <a href="login.php" class="btn btn-primary">
                         <i class="fas fa-sign-in-alt"></i> Login to Dashboard
                     </a>
                     <a href="register.php" class="btn btn-outline">
@@ -133,7 +134,7 @@ require_once '../includes/header.php';
             </div>
 
             <div class="hero-image">
-                <img src="../assets/images/slack.ico" alt="Enterprise OS Dashboard">
+                <img src="../assets/images/dashboard.png" alt="Enterprise OS Dashboard">
                 <div class="floating-card">
                     <div class="metric">
                         <i class="fas fa-check-circle"></i>
@@ -203,7 +204,7 @@ require_once '../includes/header.php';
                     </div>
                 </div>
 
-                <a href="../dashboard.php?page=login" class="btn btn-primary">
+                <a href="login.php" class="btn btn-primary">
                     <i class="fas fa-play-circle"></i> Launch Live Demo
                 </a>
             </div>
@@ -253,7 +254,7 @@ require_once '../includes/header.php';
                 Join the leading enterprises that trust Enterprise OS for their critical operations.
             </p>
             <div class="cta-buttons">
-                <a href="../dashboard.php?page=login" class="btn btn-primary">
+                <a href="login.php" class="btn btn-primary">
                     <i class="fas fa-fingerprint"></i> Get Started Now
                 </a>
                 <a href="#features" class="btn btn-outline">

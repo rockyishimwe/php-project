@@ -8,6 +8,10 @@
 if (function_exists('setSecurityHeaders')) {
     setSecurityHeaders();
 }
+
+// Determine base path for navigation
+$basePath = $basePath ?? '../';
+$authBase = ($basePath === '../') ? '' : 'pages/';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -25,8 +29,8 @@ if (function_exists('setSecurityHeaders')) {
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 
     <!-- Custom Styles -->
-    <?php if (file_exists('../assets/css/styles.css')): ?>
-        <link rel="stylesheet" href="../assets/css/styles.css">
+    <?php if (file_exists($basePath . 'assets/css/styles.css')): ?>
+        <link rel="stylesheet" href="<?php echo $basePath; ?>assets/css/styles.css">
     <?php endif; ?>
 
     <style>
@@ -295,6 +299,48 @@ if (function_exists('setSecurityHeaders')) {
                 gap: 2rem;
             }
         }
+
+        /* Mobile hamburger menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 4px;
+            background: none;
+            border: none;
+        }
+        .hamburger span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: #00d4ff;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+        .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .hamburger.open span:nth-child(2) { opacity: 0; }
+        .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+        @media (max-width: 768px) {
+            .hamburger { display: flex; }
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: rgba(10, 14, 26, 0.98);
+                border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+                flex-direction: column;
+                padding: 1rem 2rem;
+                gap: 1rem;
+                backdrop-filter: blur(20px);
+            }
+            .nav-links.open { display: flex; }
+            .nav-buttons { display: none; }
+            .nav-buttons.open { display: flex; flex-direction: column; padding: 0 2rem 1rem; position: absolute; top: 100%; left: 0; right: 0; background: rgba(10,14,26,0.98); }
+        }
     </style>
 </head>
 <body>
@@ -307,27 +353,30 @@ if (function_exists('setSecurityHeaders')) {
             <h1>ENTERPRISE OS</h1>
         </div>
 
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
         <div class="nav-links">
-            <a href="../home.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'home.php') ? 'class="active"' : ''; ?>>Home</a>
-            <a href="../features.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'features.php') ? 'class="active"' : ''; ?>>Features</a>
-            <a href="../demo.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'demo.php') ? 'class="active"' : ''; ?>>Demo</a>
-            <a href="../testimonials.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'testimonials.php') ? 'class="active"' : ''; ?>>Testimonials</a>
-            <a href="../contact.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'contact.php') ? 'class="active"' : ''; ?>>Contact</a>
+            <a href="<?php echo $basePath; ?>home.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'home.php') ? 'class="active"' : ''; ?>>Home</a>
+            <a href="<?php echo $basePath; ?>features.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'features.php') ? 'class="active"' : ''; ?>>Features</a>
+            <a href="<?php echo $basePath; ?>demo.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'demo.php') ? 'class="active"' : ''; ?>>Demo</a>
+            <a href="<?php echo $basePath; ?>testimonials.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'testimonials.php') ? 'class="active"' : ''; ?>>Testimonials</a>
+            <a href="<?php echo $basePath; ?>contact.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'contact.php') ? 'class="active"' : ''; ?>>Contact</a>
         </div>
 
         <div class="nav-buttons">
             <?php if (isset($_SESSION['active_user'])): ?>
-                <a href="../dashboard.php" class="btn btn-outline">
+                <a href="<?php echo $basePath; ?>dashboard.php" class="btn btn-outline">
                     <i class="fas fa-tachometer-alt"></i> Dashboard
                 </a>
-                <a href="../dashboard.php?page=logout" class="btn btn-primary">
+                <a href="<?php echo $basePath; ?>dashboard.php?page=logout" class="btn btn-primary">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
             <?php else: ?>
-                <a href="login.php" class="btn btn-outline">
-                    <i class="fas fa-lock"></i> Login
+                <a href="<?php echo $authBase; ?>login.php" class="btn btn-outline">
+                    <i class="fas fa-sign-in-alt"></i> Login
                 </a>
-                <a href="register.php" class="btn btn-primary">
+                <a href="<?php echo $authBase; ?>register.php" class="btn btn-primary">
                     <i class="fas fa-rocket"></i> Get Started
                 </a>
             <?php endif; ?>
@@ -335,4 +384,14 @@ if (function_exists('setSecurityHeaders')) {
     </nav>
 
     <!-- Main content will go here -->
-    <main>
+    <main>    <script>
+        // Mobile hamburger menu
+        const hamburger = document.getElementById('hamburger');
+        const navLinks = document.querySelector('.nav-links');
+        if (hamburger && navLinks) {
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('open');
+                navLinks.classList.toggle('open');
+            });
+        }
+    </script>

@@ -4,7 +4,7 @@
  * CSRF protection, input validation, and security utilities
  */
 
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 /**
  * Generate CSRF token

@@ -73,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = 'Login - Enterprise OS';
+$basePath = '../';
 require_once '../includes/header.php';
 ?>
 

@@ -8,11 +8,11 @@
 
 session_start();
 
-// Redirect to dashboard if already logged in
-if (isset($_SESSION['active_user'])) {
-    header("Location: dashboard.php?page=home");
-    exit();
-}
+// Redirect to dashboard if already logged in - REMOVED for public pages
+// if (isset($_SESSION['active_user'])) {
+//     header("Location: dashboard.php?page=home");
+//     exit();
+// }
 
 $systemStats = [
     'videos' => '24+',

@@ -4,10 +4,10 @@
  * User authentication and session management
  */
 
-require_once 'database.php';
-require_once 'session_handler.php';
-require_once 'security.php';
-require_once 'functions.php';
+require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/session_handler.php';
+require_once __DIR__ . '/security.php';
+require_once __DIR__ . '/functions.php';
 
 /**
  * Log user activity
@@ -246,7 +246,7 @@ function getRedirectAfterLogin() {
 /**
  * Register a new user
  */
-function registerUser($data) {
+function registerUser($data, $profileImagePath = null) {
     try {
         $db = Database::getInstance();
 
@@ -290,8 +290,8 @@ function registerUser($data) {
 
         // Insert new user
         $userId = $db->insert(
-            "INSERT INTO users (username, email, password, name, role, department, permissions, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+            "INSERT INTO users (username, email, password, name, role, department, ref_img, permissions, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
             [
                 $data['username'],
                 $data['email'],
@@ -299,6 +299,7 @@ function registerUser($data) {
                 $data['name'],
                 $role,
                 $department,
+                $profileImagePath,
                 $permissions
             ]
         );
