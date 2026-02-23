@@ -225,6 +225,97 @@ if ($isLoggedIn && in_array($currentPage, $adminOnlyPages)) {
     }
 }
 
+// Profile update handler
+if ($currentPage === 'profile' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
+        $message = 'Invalid request.';
+        $messageType = 'error';
+    } else {
+        if (isset($_POST['update_profile'])) {
+            // Update profile information
+            $updateData = [
+                'name' => sanitizeInput($_POST['name'] ?? ''),
+                'email' => sanitizeInput($_POST['email'] ?? ''),
+                'role' => sanitizeInput($_POST['role'] ?? ''),
+                'department' => sanitizeInput($_POST['department'] ?? '')
+            ];
+
+            // Handle profile image upload
+            if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = 'assets/images/profiles/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+
+                $fileName = uniqid() . '_' . basename($_FILES['profile_image']['name']);
+                $targetFile = $uploadDir . $fileName;
+
+                $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                $fileType = $_FILES['profile_image']['type'];
+                if (!in_array($fileType, $allowedTypes)) {
+                    $message = 'Only JPG, PNG, and GIF files are allowed.';
+                    $messageType = 'error';
+                } elseif ($_FILES['profile_image']['size'] > MAX_FILE_SIZE) {
+                    $message = 'File size must be less than 5MB.';
+                    $messageType = 'error';
+                } elseif (move_uploaded_file($_FILES['profile_image']['tmp_name'], $targetFile)) {
+                    $updateData['ref_img'] = 'assets/images/profiles/' . $fileName;
+                } else {
+                    $message = 'Failed to upload image.';
+                    $messageType = 'error';
+                }
+            }
+
+            if (!isset($message)) {
+                try {
+                    $db = Database::getInstance();
+                    $db->execute(
+                        "UPDATE users SET name = ?, email = ?, role = ?, department = ?" . (isset($updateData['ref_img']) ? ", ref_img = ?" : "") . " WHERE id = ?",
+                        array_merge(array_values($updateData), [$user['id']])
+                    );
+
+                    // Update session
+                    $_SESSION['active_user'] = array_merge($user, $updateData);
+
+                    $message = 'Profile updated successfully.';
+                    $messageType = 'success';
+                } catch (Exception $e) {
+                    $message = 'Failed to update profile.';
+                    $messageType = 'error';
+                }
+            }
+        } elseif (isset($_POST['change_password'])) {
+            // Change password
+            $currentPassword = $_POST['current_password'] ?? '';
+            $newPassword = $_POST['new_password'] ?? '';
+            $confirmPassword = $_POST['confirm_new_password'] ?? '';
+
+            if (!password_verify($currentPassword, $user['password'])) {
+                $message = 'Current password is incorrect.';
+                $messageType = 'error';
+            } elseif ($newPassword !== $confirmPassword) {
+                $message = 'New passwords do not match.';
+                $messageType = 'error';
+            } elseif (!validatePassword($newPassword)) {
+                $message = 'New password must be at least 8 characters with uppercase, lowercase, and number.';
+                $messageType = 'error';
+            } else {
+                $hashedPassword = password_hash($newPassword, PASSWORD_ARGON2ID);
+                try {
+                    $db = Database::getInstance();
+                    $db->execute("UPDATE users SET password = ? WHERE id = ?", [$hashedPassword, $user['id']]);
+
+                    $message = 'Password changed successfully.';
+                    $messageType = 'success';
+                } catch (Exception $e) {
+                    $message = 'Failed to change password.';
+                    $messageType = 'error';
+                }
+            }
+        }
+    }
+}
+
 // Logout handler
 if ($currentPage === 'logout') {
     if (isset($_SESSION['active_user'])) {
@@ -769,6 +860,62 @@ if ($currentPage === 'login' && !isset($_SESSION['csrf_token'])) {
         
         .alert i {
             font-size: 1.1rem;
+        }
+        
+        .settings-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .settings-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .settings-card .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .settings-card label {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        .settings-card input[type="text"],
+        .settings-card input[type="email"],
+        .settings-card input[type="password"],
+        .settings-card input[type="file"] {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+        }
+        
+        .settings-card input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+        }
+        
+        .settings-card small {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: block;
         }
         
         .form-select option {
@@ -1849,6 +1996,11 @@ if ($currentPage === 'login' && !isset($_SESSION['csrf_token'])) {
                         <i class="fas fa-chart-pie"></i>
                         <span>Analytics</span>
                     </a>
+
+                    <a href="?page=profile" class="nav-link <?= $currentPage === 'profile' ? 'active' : '' ?>">
+                        <i class="fas fa-user-cog"></i>
+                        <span>My Profile</span>
+                    </a>
                     
                     <a href="?page=logout" class="nav-link logout">
                         <i class="fas fa-power-off"></i>
@@ -2354,6 +2506,92 @@ if ($currentPage === 'login' && !isset($_SESSION['csrf_token'])) {
                         </div>
                         <div class="chart-container">
                             <canvas id="analyticsChart"></canvas>
+                        </div>
+                    </div>
+                    
+                <?php elseif($currentPage === 'profile'): ?>
+                    <!-- Profile Settings Page -->
+                    <div class="page-header">
+                        <div class="page-title-wrapper">
+                            <h1 class="page-title">
+                                <i class="fas fa-user-cog"></i>
+                                My Profile Settings
+                            </h1>
+                            <p class="page-subtitle">Update your account information and preferences</p>
+                        </div>
+                    </div>
+                    
+                    <?php if (isset($message)): ?>
+                        <div class="alert alert-<?= $messageType ?>" style="margin-bottom: 2rem;">
+                            <i class="fas fa-<?= $messageType === 'success' ? 'check-circle' : 'exclamation-triangle' ?>"></i>
+                            <?= $message ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <div class="grid grid-2">
+                        <!-- Profile Information -->
+                        <div class="settings-card">
+                            <h3><i class="fas fa-user"></i> Profile Information</h3>
+                            <form method="POST" action="?page=profile" enctype="multipart/form-data">
+                                <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
+                                
+                                <div class="form-group">
+                                    <label for="profile_name">Full Name</label>
+                                    <input type="text" id="profile_name" name="name" value="<?= htmlspecialchars($user['name']) ?>" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="profile_email">Email Address</label>
+                                    <input type="email" id="profile_email" name="email" value="<?= htmlspecialchars($user['email']) ?>" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="profile_role">Role</label>
+                                    <input type="text" id="profile_role" name="role" value="<?= htmlspecialchars($user['role']) ?>" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="profile_department">Department</label>
+                                    <input type="text" id="profile_department" name="department" value="<?= htmlspecialchars($user['department']) ?>" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="profile_image">Profile Image</label>
+                                    <input type="file" id="profile_image" name="profile_image" accept="image/*">
+                                    <small>Leave empty to keep current image. Max 5MB.</small>
+                                </div>
+                                
+                                <button type="submit" name="update_profile" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Update Profile
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Change Password -->
+                        <div class="settings-card">
+                            <h3><i class="fas fa-lock"></i> Change Password</h3>
+                            <form method="POST" action="?page=profile">
+                                <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
+                                
+                                <div class="form-group">
+                                    <label for="current_password">Current Password</label>
+                                    <input type="password" id="current_password" name="current_password" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="new_password">New Password</label>
+                                    <input type="password" id="new_password" name="new_password" required minlength="8">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="confirm_new_password">Confirm New Password</label>
+                                    <input type="password" id="confirm_new_password" name="confirm_new_password" required>
+                                </div>
+                                
+                                <button type="submit" name="change_password" class="btn btn-primary">
+                                    <i class="fas fa-key"></i> Change Password
+                                </button>
+                            </form>
                         </div>
                     </div>
                     
